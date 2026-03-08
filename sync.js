@@ -18,10 +18,13 @@
  *    auto-detected (plugin skills like superpowers, GSD, etc. — these live
  *    in plugin cache directories, not ~/.claude/skills/)
  *
- * 4. OUTPUT: Writes data.json, which the HTML page reads on load.
+ * 4. OUTPUT: Injects the data directly into index.html between marker
+ *    comments (__SKILLS_DATA_START__ and __SKILLS_DATA_END__), so the
+ *    page works without any fetch() calls. Uses atomic write (temp file
+ *    + validation + rename) to prevent corruption.
  *
  * USAGE:
- *   node sync.js           # Scan and generate data.json
+ *   node sync.js           # Scan and inject into index.html
  *   node sync.js --dry-run # Show what would be found without writing
  *   node sync.js --verbose # Show detailed scan progress
  */
@@ -30,7 +33,10 @@ const fs = require('fs');
 const path = require('path');
 
 const SKILLS_DIR = path.join(require('os').homedir(), '.claude', 'skills');
-const OUTPUT_FILE = path.join(__dirname, 'data.json');
+const HTML_FILE = path.join(__dirname, 'index.html');
+const TEMP_FILE = path.join(__dirname, 'index.html.tmp');
+const START_MARKER = '// __SKILLS_DATA_START__';
+const END_MARKER = '// __SKILLS_DATA_END__';
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const VERBOSE = process.argv.includes('--verbose');
@@ -366,6 +372,119 @@ function buildOutput(skills) {
   };
 }
 
+// ── Step 9: Build the JS DATA object string for injection ──
+// This produces the exact JavaScript that goes between the markers
+function buildDataString(output) {
+  const lines = ['const DATA = {'];
+
+  // Tree (keep the existing decision tree — it's curated, not auto-generated)
+  // We read it from the current index.html so it's preserved
+  return null; // signal to preserve tree from existing file
+}
+
+// ── Step 10: Generate sections JS from output ──
+function generateSectionsJS(output) {
+  const sectionLines = output.sections.map(s => {
+    const cmds = s.commands.map(c =>
+      `      { cmd: ${JSON.stringify(c.cmd)}, desc: ${JSON.stringify(c.desc)}, input: ${JSON.stringify(c.input)} }`
+    ).join(',\n');
+    return `    { id: ${JSON.stringify(s.id)}, icon: ${JSON.stringify(s.icon)}, title: ${JSON.stringify(s.title)}, group: ${JSON.stringify(s.group)}, commands: [\n${cmds},\n    ]}`;
+  }).join(',\n');
+
+  const sidebarGroupsJS = JSON.stringify(output.sidebarGroups, null, 4).split('\n').map((l, i) => i === 0 ? l : '  ' + l).join('\n');
+
+  return { sectionLines, sidebarGroupsJS };
+}
+
+// ── Step 11: Inject into index.html with atomic write ──
+function injectIntoHTML(output) {
+  // Read current HTML
+  if (!fs.existsSync(HTML_FILE)) {
+    console.error(`  ✗ ${HTML_FILE} not found`);
+    process.exit(1);
+  }
+  const html = fs.readFileSync(HTML_FILE, 'utf8');
+  const originalLineCount = html.split('\n').length;
+
+  // Find markers
+  const startIdx = html.indexOf(START_MARKER);
+  const endIdx = html.indexOf(END_MARKER);
+  if (startIdx === -1 || endIdx === -1) {
+    console.error('  ✗ Markers not found in index.html');
+    console.error('    Expected: ' + START_MARKER);
+    console.error('    Expected: ' + END_MARKER);
+    process.exit(1);
+  }
+
+  // Extract existing tree (between DATA = { and sections:)
+  const existingData = html.slice(
+    html.indexOf('const DATA = {', startIdx),
+    html.indexOf(END_MARKER)
+  );
+  const treeMatch = existingData.match(/tree:\s*\[([\s\S]*?)\],\s*\n\s*sidebarGroups:/);
+  const existingTree = treeMatch ? treeMatch[1] : null;
+
+  if (!existingTree) {
+    console.error('  ✗ Could not find existing tree data in index.html');
+    process.exit(1);
+  }
+
+  // Build new DATA block
+  const { sectionLines, sidebarGroupsJS } = generateSectionsJS(output);
+
+  const newDataBlock = `${START_MARKER}
+const DATA = {
+  tree: [${existingTree}],
+  sidebarGroups: ${sidebarGroupsJS},
+  sections: [
+${sectionLines},
+  ]
+};
+${END_MARKER}`;
+
+  // Replace the content between (and including) markers
+  const before = html.slice(0, startIdx);
+  const after = html.slice(endIdx + END_MARKER.length);
+  const newHTML = before + newDataBlock + after;
+
+  // ── Validation ──
+  const newLineCount = newHTML.split('\n').length;
+  const lineDiff = Math.abs(newLineCount - originalLineCount) / originalLineCount;
+
+  const checks = [
+    { name: 'Has <!DOCTYPE html>', pass: newHTML.includes('<!DOCTYPE html>') },
+    { name: 'Has </html>', pass: newHTML.includes('</html>') },
+    { name: 'Has start marker', pass: newHTML.includes(START_MARKER) },
+    { name: 'Has end marker', pass: newHTML.includes(END_MARKER) },
+    { name: 'Has <script>', pass: newHTML.includes('<script>') },
+    { name: 'Has </script>', pass: newHTML.includes('</script>') },
+    { name: 'Has render()', pass: newHTML.includes('render()') },
+    { name: `Line count within 20% (${originalLineCount} → ${newLineCount})`, pass: lineDiff < 0.2 },
+  ];
+
+  console.log('\n  ── Validation ──');
+  let allPass = true;
+  for (const check of checks) {
+    const icon = check.pass ? '✓' : '✗';
+    console.log(`  ${icon} ${check.name}`);
+    if (!check.pass) allPass = false;
+  }
+
+  if (!allPass) {
+    console.error('\n  ✗ Validation FAILED — index.html NOT modified');
+    if (fs.existsSync(TEMP_FILE)) fs.unlinkSync(TEMP_FILE);
+    process.exit(1);
+  }
+
+  // Write to temp file first (atomic)
+  fs.writeFileSync(TEMP_FILE, newHTML);
+  // Rename temp → real (atomic on same filesystem)
+  fs.renameSync(TEMP_FILE, HTML_FILE);
+
+  console.log(`\n  ✓ Injected into ${HTML_FILE}`);
+  console.log(`  ✓ ${output.totalCommands} commands across ${output.totalSections} categories\n`);
+}
+
 // ── Main ──
 function main() {
   console.log('\n  ╔══════════════════════════════════════╗');
@@ -382,17 +501,15 @@ function main() {
   console.log(`  Static:   ${statics.length} skills from plugins`);
   console.log(`  Merged:   ${merged.length} total (deduped)`);
   console.log(`  Sections: ${output.totalSections} categories`);
-  console.log(`  Commands: ${output.totalCommands} total\n`);
+  console.log(`  Commands: ${output.totalCommands} total`);
 
   if (DRY_RUN) {
-    console.log('  [dry-run] Would write to data.json — skipping.\n');
-    // Print categories summary
+    console.log('\n  [dry-run] Would inject into index.html — skipping.\n');
     for (const s of output.sections) {
       console.log(`  ${s.icon} ${s.title}: ${s.commands.length} commands`);
     }
   } else {
-    fs.writeFileSync(OUTPUT_FILE, JSON.stringify(output, null, 2));
-    console.log(`  ✓ Written to ${OUTPUT_FILE}\n`);
+    injectIntoHTML(output);
   }
 }
 
