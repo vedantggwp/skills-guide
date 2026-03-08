@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+.skip-link { position: absolute; top: -100%; left: 16px; background: var(--accent); color: #000; padding: 8px 16px; border-radius: 0 0 8px 8px; z-index: 500; font-weight: 600; font-size: 0.85rem; text-decoration: none; }
+.skip-link:focus { top: 0; }
 
 :root {
   --font-display: 'Instrument Serif', serif;
@@ -27,8 +29,8 @@
   --border: #2a2636;
   --border-subtle: #1f1c28;
   --text-primary: #f0ece4;
-  --text-secondary: #9a9498;
-  --text-tertiary: #6b6670;
+  --text-secondary: #b0abb0;
+  --text-tertiary: #8a8590;
   --accent: #e8a84c;
   --accent-dim: #e8a84c22;
   --accent-glow: #e8a84c15;
@@ -54,17 +56,17 @@
   --border-subtle: #ece9e2;
   --text-primary: #1a1818;
   --text-secondary: #6b6560;
-  --text-tertiary: #9a958e;
-  --accent: #c47a1a;
-  --accent-dim: #c47a1a15;
-  --accent-glow: #c47a1a0a;
-  --accent-text: #a86515;
-  --tag-bg: #c47a1a12;
-  --tag-text: #a86515;
+  --text-tertiary: #756e66;
+  --accent: #9a6012;
+  --accent-dim: #9a601215;
+  --accent-glow: #9a60120a;
+  --accent-text: #945a12;
+  --tag-bg: #9a601212;
+  --tag-text: #945a12;
   --success: #3a8f55;
   --success-bg: #3a8f5512;
   --sidebar-bg: #f5f2ec;
-  --copy-flash: #c47a1a22;
+  --copy-flash: #9a601222;
   --noise-opacity: 0.015;
   --shadow-card: 0 1px 4px rgba(0,0,0,0.06);
   --shadow-card-hover: 0 4px 16px rgba(0,0,0,0.1);
@@ -86,7 +88,7 @@ body::before {
   background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   opacity: var(--noise-opacity);
   pointer-events: none;
-  z-index: 9999;
+  z-index: 1;
 }
 
 .layout { display: grid; grid-template-columns: 260px 1fr; max-width: 1400px; margin: 0 auto; }
@@ -161,8 +163,13 @@ body::before {
 .section-icon {
   width: 36px; height: 36px; border-radius: 9px; background: var(--accent-dim);
   display: flex; align-items: center; justify-content: center; font-size: 1.05rem; flex-shrink: 0;
-  transition: transform 0.3s var(--ease-spring);
+  transition: transform 0.3s var(--ease-spring); color: var(--accent-text);
 }
+.section-icon svg, .tree-node-icon svg { width: 18px; height: 18px; }
+.nav-icon svg { width: 14px; height: 14px; display: block; }
+.copy-btn svg { width: 14px; height: 14px; }
+.search-icon svg { width: 16px; height: 16px; }
+.no-results-icon svg { width: 32px; height: 32px; }
 .section-header:hover .section-icon { transform: scale(1.08); }
 .section-title { font-family: var(--font-display); font-size: 1.4rem; font-weight: 400; flex: 1; }
 .section-count { font-family: var(--font-mono); font-size: 0.68rem; color: var(--text-tertiary); background: var(--bg-surface); padding: 3px 9px; border-radius: 20px; font-weight: 500; }
@@ -195,10 +202,11 @@ body::before {
 .cmd-tag.input-auto { background: var(--success-bg); color: var(--success); }
 .cmd-tag.input-code { background: #34d39920; color: #34d399; }
 .copy-btn {
-  width: 32px; height: 32px; border-radius: 7px; border: 1px solid var(--border); background: var(--bg-surface);
+  position: relative; width: 32px; height: 32px; border-radius: 7px; border: 1px solid var(--border); background: var(--bg-surface);
   color: var(--text-tertiary); cursor: pointer; display: flex; align-items: center; justify-content: center;
   font-size: 0.78rem; transition: all 0.2s; flex-shrink: 0;
 }
+.copy-btn::after { content: ''; position: absolute; inset: -6px; }
 .copy-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 .copy-btn.copied { border-color: var(--success); color: var(--success); background: var(--success-bg); }
 
@@ -206,12 +214,12 @@ body::before {
 .decision-tree { margin-bottom: 44px; padding-bottom: 40px; border-bottom: 1px solid var(--border-subtle); }
 .decision-tree h2 { font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 6px; }
 .decision-tree > p { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; }
-.tree-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.tree-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; align-items: start; }
 .tree-node { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 10px; overflow: hidden; transition: all 0.3s var(--ease-out-expo); }
 .tree-node:hover { border-color: var(--border); box-shadow: var(--shadow-card); }
 .tree-node-header { display: flex; align-items: center; gap: 10px; padding: 13px 16px; cursor: pointer; user-select: none; transition: background 0.2s; }
 .tree-node-header:hover { background: var(--bg-card-hover); }
-.tree-node-icon { font-size: 1.1rem; flex-shrink: 0; }
+.tree-node-icon { font-size: 1.1rem; flex-shrink: 0; color: var(--accent-text); }
 .tree-node-label { font-weight: 600; font-size: 0.82rem; flex: 1; }
 .tree-node-chevron { color: var(--text-tertiary); font-size: 0.65rem; transition: transform 0.3s var(--ease-out-expo); }
 .tree-node.open .tree-node-chevron { transform: rotate(90deg); }
@@ -275,13 +283,14 @@ body::before {
 .mobile-header { display: none; position: sticky; top: 0; z-index: 200; padding: 14px 18px; background: var(--bg); border-bottom: 1px solid var(--border-subtle); align-items: center; justify-content: space-between; }
 .mobile-header-title { font-family: var(--font-display); font-size: 1.15rem; }
 .mobile-header-title span { color: var(--accent); }
-.mobile-menu-btn, .mobile-theme-btn { width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg-surface); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; }
-.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 299; }
-.sidebar-overlay.open { display: block; }
+.mobile-menu-btn, .mobile-theme-btn { width: 44px; height: 44px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-surface); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+.sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 299; -webkit-tap-highlight-color: transparent; }
+.sidebar-overlay.open { display: block; cursor: pointer; }
 
 @media (max-width: 860px) {
   .layout { grid-template-columns: 1fr; }
-  .sidebar { display: none; position: fixed; top: 0; left: 0; width: 270px; z-index: 300; box-shadow: 4px 0 24px rgba(0,0,0,0.3); }
+  .sidebar { display: none; position: fixed; top: 0; left: 0; width: 270px; height: 100vh; z-index: 300; box-shadow: 4px 0 24px rgba(0,0,0,0.3); }
+  .sidebar-nav a { min-height: 44px; padding: 10px 12px; }
   .sidebar.open { display: block; }
   .mobile-header { display: flex; }
   .main { padding: 20px 18px 100px; }
@@ -297,6 +306,14 @@ body::before {
   .search-hint { display: none; }
 }
 
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.sidebar-nav a:focus-visible, .theme-toggle:focus-visible, .copy-btn:focus-visible, .mobile-menu-btn:focus-visible, .mobile-theme-btn:focus-visible, .tree-node-header:focus-visible, .tree-leaf:focus-visible, .section-header:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  html { scroll-behavior: auto; }
+}
+
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -304,11 +321,12 @@ body::before {
 </head>
 <body>
 
+<a class="skip-link" href="#commandSections">Skip to commands</a>
 <div class="sidebar-overlay" onclick="closeSidebar()"></div>
 <div class="mobile-header">
-  <button class="mobile-menu-btn" onclick="toggleSidebar()">&#9776;</button>
+  <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Open menu">&#9776;</button>
   <div class="mobile-header-title">Skills<span>.</span>Guide</div>
-  <button class="mobile-theme-btn" onclick="toggleTheme()" id="mobileThemeBtn">&#9790;</button>
+  <button class="mobile-theme-btn" onclick="toggleTheme()" id="mobileThemeBtn" aria-label="Toggle theme">&#9790;</button>
 </div>
 
 <div class="layout">
@@ -319,9 +337,9 @@ body::before {
 
     <div class="sidebar-section-label">Overview</div>
     <ul class="sidebar-nav">
-      <li><a href="#decision-tree"><span class="nav-icon">&#9670;</span> Decision Tree</a></li>
-      <li><a href="#workflow"><span class="nav-icon">&#8594;</span> Workflow</a></li>
-      <li><a href="#tips"><span class="nav-icon">&#9733;</span> Pro Tips</a></li>
+      <li><a href="#decision-tree"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l5 6-5 6-5-6z"/></svg></span> Decision Tree</a></li>
+      <li><a href="#workflow"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h12m-4-4l4 4-4 4"/></svg></span> Workflow</a></li>
+      <li><a href="#tips"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1l2 5h5l-4 3.5 1.5 5L8 11.5 3.5 14.5 5 9.5 1 6h5z"/></svg></span> Pro Tips</a></li>
     </ul>
 
     <div class="sidebar-section-label">Marketing</div>
@@ -337,12 +355,12 @@ body::before {
     <ul class="sidebar-nav" id="sidebarWorkflow"></ul>
 
     <ul class="sidebar-nav" style="margin-top:16px">
-      <li><a href="#sources"><span class="nav-icon">&#9741;</span> Sources</a></li>
+      <li><a href="#sources"><span class="nav-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 1h4M6 1v5L2 14h12L10 6V1"/></svg></span> Sources</a></li>
     </ul>
 
     <div class="sidebar-bottom">
-      <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
-        <span class="nav-icon" id="themeIcon">&#9790;</span>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle" aria-label="Toggle theme">
+        <span class="nav-icon" id="themeIcon" aria-hidden="true">&#9790;</span>
         <span id="themeLabel">Light Mode</span>
       </button>
     </div>
@@ -355,7 +373,16 @@ body::before {
       <div class="hero-stats">
         <div class="hero-stat"><span class="hero-stat-num" id="totalCommands">0</span><span class="hero-stat-label">Commands</span></div>
         <div class="hero-stat"><span class="hero-stat-num" id="totalSections">0</span><span class="hero-stat-label">Categories</span></div>
-        <div class="hero-stat"><span class="hero-stat-num">8</span><span class="hero-stat-label">Skill Packs</span></div>
+        <div class="hero-stat"><span class="hero-stat-num" id="totalPacks">8</span><span class="hero-stat-label">Skill Packs</span></div>
+      </div>
+    </div>
+
+    <div class="search-container">
+      <div class="search-box">
+        <span class="search-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4"/><path d="m10.5 10.5 3.5 3.5"/></svg></span>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search all commands..." autocomplete="off" spellcheck="false" aria-label="Search all commands">
+        <span class="search-count" id="searchCount"></span>
+        <span class="search-hint" id="searchHint">&#8984;K</span>
       </div>
     </div>
 
@@ -388,35 +415,59 @@ body::before {
       </div>
     </div>
 
-    <div class="search-container">
-      <div class="search-box">
-        <span class="search-icon">&#8981;</span>
-        <input type="text" class="search-input" id="searchInput" placeholder="Search all commands..." autocomplete="off" spellcheck="false">
-        <span class="search-count" id="searchCount"></span>
-        <span class="search-hint" id="searchHint">&#8984;K</span>
-      </div>
-    </div>
-
     <div id="commandSections"></div>
-    <div class="no-results" id="noResults"><div class="no-results-icon">&#9676;</div><h3>No commands found</h3><p>Try a different search term</p></div>
+    <div class="no-results" id="noResults"><div class="no-results-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4"/><path d="m10.5 10.5 3.5 3.5"/></svg></div><h3>No commands found</h3><p>Try a different search term</p></div>
 
     <div class="sources" id="sources">
       <h2>Installed From</h2>
       <div class="source-grid">
-        <a class="source-row" href="https://github.com/coreyhaines31/marketingskills" target="_blank"><span class="source-num">1</span><div><div class="source-name">coreyhaines31/marketingskills</div><div class="source-detail">CRO, copywriting, SEO, paid ads, growth</div></div><span class="source-count">32 skills</span></a>
-        <a class="source-row" href="https://github.com/zubair-trabzada/ai-marketing-claude" target="_blank"><span class="source-num">2</span><div><div class="source-name">zubair-trabzada/ai-marketing-claude</div><div class="source-detail">Marketing audit suite with parallel agents</div></div><span class="source-count">14 + 5 agents</span></a>
-        <a class="source-row" href="https://github.com/BrianRWagner/ai-marketing-claude-code-skills" target="_blank"><span class="source-num">3</span><div><div class="source-name">BrianRWagner/ai-marketing-claude-code-skills</div><div class="source-detail">Positioning, LinkedIn, outreach, content</div></div><span class="source-count">20+ skills</span></a>
-        <a class="source-row" href="https://github.com/alirezarezvani/claude-skills" target="_blank"><span class="source-num">4</span><div><div class="source-name">alirezarezvani/claude-skills</div><div class="source-detail">Engineering, marketing, product, C-level, compliance</div></div><span class="source-count">169 skills</span></a>
-        <a class="source-row" href="https://github.com/kepano/obsidian-skills" target="_blank"><span class="source-num">5</span><div><div class="source-name">kepano/obsidian-skills</div><div class="source-detail">Obsidian Markdown, Bases, Canvas, CLI</div></div><span class="source-count">5 skills</span></a>
-        <a class="source-row" href="#" target="_blank"><span class="source-num">6</span><div><div class="source-name">superpowers (plugin)</div><div class="source-detail">Brainstorming, TDD, code review, git worktrees</div></div><span class="source-count">12 skills</span></a>
-        <a class="source-row" href="#" target="_blank"><span class="source-num">7</span><div><div class="source-name">everything-claude-code (plugin)</div><div class="source-detail">Frontend, backend, database, deployment, testing patterns</div></div><span class="source-count">60+ skills</span></a>
-        <a class="source-row" href="#" target="_blank"><span class="source-num">8</span><div><div class="source-name">GSD (plugin)</div><div class="source-detail">Project management, phases, debugging, execution</div></div><span class="source-count">25 skills</span></a>
+        <a class="source-row" href="https://github.com/coreyhaines31/marketingskills" target="_blank" rel="noopener noreferrer"><span class="source-num">1</span><div><div class="source-name">coreyhaines31/marketingskills</div><div class="source-detail">CRO, copywriting, SEO, paid ads, growth</div></div><span class="source-count">32 skills</span></a>
+        <a class="source-row" href="https://github.com/zubair-trabzada/ai-marketing-claude" target="_blank" rel="noopener noreferrer"><span class="source-num">2</span><div><div class="source-name">zubair-trabzada/ai-marketing-claude</div><div class="source-detail">Marketing audit suite with parallel agents</div></div><span class="source-count">14 + 5 agents</span></a>
+        <a class="source-row" href="https://github.com/BrianRWagner/ai-marketing-claude-code-skills" target="_blank" rel="noopener noreferrer"><span class="source-num">3</span><div><div class="source-name">BrianRWagner/ai-marketing-claude-code-skills</div><div class="source-detail">Positioning, LinkedIn, outreach, content</div></div><span class="source-count">20+ skills</span></a>
+        <a class="source-row" href="https://github.com/alirezarezvani/claude-skills" target="_blank" rel="noopener noreferrer"><span class="source-num">4</span><div><div class="source-name">alirezarezvani/claude-skills</div><div class="source-detail">Engineering, marketing, product, C-level, compliance</div></div><span class="source-count">169 skills</span></a>
+        <a class="source-row" href="https://github.com/kepano/obsidian-skills" target="_blank" rel="noopener noreferrer"><span class="source-num">5</span><div><div class="source-name">kepano/obsidian-skills</div><div class="source-detail">Obsidian Markdown, Bases, Canvas, CLI</div></div><span class="source-count">5 skills</span></a>
+        <div class="source-row"><span class="source-num">6</span><div><div class="source-name">superpowers (plugin)</div><div class="source-detail">Brainstorming, TDD, code review, git worktrees</div></div><span class="source-count">12 skills</span></div>
+        <div class="source-row"><span class="source-num">7</span><div><div class="source-name">everything-claude-code (plugin)</div><div class="source-detail">Frontend, backend, database, deployment, testing patterns</div></div><span class="source-count">60+ skills</span></div>
+        <div class="source-row"><span class="source-num">8</span><div><div class="source-name">GSD (plugin)</div><div class="source-detail">Project management, phases, debugging, execution</div></div><span class="source-count">25 skills</span></div>
       </div>
     </div>
   </main>
 </div>
 
 <script>
+const _s = d => `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const ICON_SVG = {
+  "\u{1F50D}": _s('<circle cx="7" cy="7" r="4"/><path d="m10.5 10.5 3.5 3.5"/>'),
+  "\u270E": _s('<path d="M11 2l3 3-9 9H2v-3z"/>'),
+  "\u2699": _s('<circle cx="8" cy="8" r="2"/><path d="M8 1v3m0 8v3M1 8h3m8 0h3M3.5 3.5l2 2m5 5 2 2M3.5 12.5l2-2m5-5 2-2"/>'),
+  "\u{1F310}": _s('<circle cx="8" cy="8" r="6"/><path d="M2 8h12"/><ellipse cx="8" cy="8" rx="3" ry="6"/>'),
+  "\u{1F4BB}": _s('<path d="M5 4L1 8l4 4m6-8l4 4-4 4"/>'),
+  "\u{1F3D7}": _s('<path d="M8 2l6 3-6 3-6-3z"/><path d="M2 8l6 3 6-3"/><path d="M2 11l6 3 6-3"/>'),
+  "\u{1F4CA}": _s('<path d="M3 14V8m3.3 6V5m3.4 9V3m3.3 11V6"/>'),
+  "\u{1F454}": _s('<rect x="2" y="5" width="12" height="9" rx="1"/><path d="M5.5 5V3a2.5 2.5 0 015 0v2"/>'),
+  "\u{1F4C4}": _s('<path d="M4.5 1.5h5L13 5v9.5a1 1 0 01-1 1H4a1 1 0 01-1-1v-12a1 1 0 011-1z"/><path d="M9.5 1.5V5H13"/>'),
+  "\u26A1": _s('<path d="M9 1L4 9h4l-1 6 5-8H8z"/>'),
+  "\u2666": _s('<path d="M8 2l5 6-5 6-5-6z"/>'),
+  "\u2709": _s('<rect x="1" y="3" width="14" height="10" rx="1"/><path d="M1 3l7 5 7-5"/>'),
+  "\u{1F465}": _s('<circle cx="6" cy="5" r="2.5"/><path d="M1.5 14a4.5 4.5 0 019 0"/><circle cx="11.5" cy="5.5" r="2"/><path d="M14.5 14a3 3 0 00-3.5-3"/>'),
+  "\u2696": _s('<path d="M8 2v12M3 5h10"/><path d="M1 10l2-5 2 5a2 2 0 01-4 0z"/><path d="M9 10l2-5 2 5a2 2 0 01-4 0z"/>'),
+  "\u{1F4E2}": _s('<path d="M13 3v10L6 10.5V5.5z"/><rect x="2.5" y="5.5" width="3.5" height="5" rx=".5"/><path d="M6 10.5v3"/>'),
+  "\u{1F528}": _s('<path d="M10 2l4 4-1.5 1.5-4-4z"/><path d="M6.5 7L2 11.5a1.4 1.4 0 002 2L8.5 9z"/>'),
+  "\u{1F9D1}": _s('<circle cx="8" cy="5" r="3"/><path d="M2.5 15a5.5 5.5 0 0111 0"/>'),
+  "\u{1F4D0}": _s('<path d="M2 14V2h12z"/><path d="M2 10h5v4"/>'),
+  "\u2705": _s('<circle cx="8" cy="8" r="6"/><path d="M5.5 8l2 2 3.5-4"/>'),
+  "\u{1F4A1}": _s('<path d="M6 12h4m-3 2.5h2"/><path d="M5 10a5 5 0 1110-2 5 5 0 01-2 4H7a5 5 0 01-2-2z"/>'),
+  "\u{1F4E6}": _s('<path d="M2 5l6-3 6 3v7l-6 3-6-3z"/><path d="M2 5l6 3 6-3M8 8v7"/>'),
+  "\u{1F4CB}": _s('<rect x="3" y="2.5" width="10" height="12" rx="1"/><path d="M6 2.5V2a2 2 0 014 0v.5"/>'),
+  "\u{1F4BC}": _s('<rect x="2" y="5" width="12" height="9" rx="1"/><path d="M5.5 5V3a2.5 2.5 0 015 0v2"/>'),
+  "\u{1F4B0}": _s('<path d="M8 1v14"/><path d="M5 4h5a2.5 2.5 0 010 5H5m0 0h5.5a2.5 2.5 0 010 5H5"/>'),
+  "\u{1F680}": _s('<path d="M8 14l-3-3h6zM5 7.5L3 10l2 2m6-4.5L13 10l-2 2"/><path d="M5 12h6c2-3 2-7-3-10-5 3-5 7-3 10z"/>'),
+  "\u2753": _s('<circle cx="8" cy="8" r="6"/><path d="M6 6a2 2 0 114 0c0 1.5-2 2-2 3"/><circle cx="8" cy="12" r=".5" fill="currentColor" stroke="none"/>'),
+};
+function iconSvg(c) { return ICON_SVG[c] || c; }
+const COPY_ICON = _s('<rect x="3" y="2.5" width="10" height="12" rx="1"/><path d="M6 2.5V2a2 2 0 014 0v.5"/>');
+const CHECK_ICON = _s('<path d="M3.5 8l3.5 3.5 5.5-7"/>');
+
 // __SKILLS_DATA_START__
 const DATA = {
   tree: [
@@ -886,13 +937,13 @@ function render() {
 function renderTree() {
   document.getElementById('treeGrid').innerHTML = DATA.tree.map((node, i) => `
     <div class="tree-node" data-tree="${i}">
-      <div class="tree-node-header" onclick="toggleTree(${i})">
-        <span class="tree-node-icon">${node.icon}</span>
+      <div class="tree-node-header" onclick="toggleTree(${i})" tabindex="0" role="button" aria-expanded="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTree(${i})}">
+        <span class="tree-node-icon" aria-hidden="true">${iconSvg(node.icon)}</span>
         <span class="tree-node-label">${node.label}</span>
-        <span class="tree-node-chevron">\u25B6</span>
+        <span class="tree-node-chevron" aria-hidden="true">\u25B6</span>
       </div>
       <div class="tree-node-body"><div class="tree-node-body-inner">
-        ${node.leaves.map(l => `<div class="tree-leaf" onclick="copyCommand('${l.cmd.replace(/'/g,"\\'")}',this)"><span class="tree-leaf-q">${l.q}</span><span class="tree-leaf-cmd">${l.cmd}</span></div>`).join('')}
+        ${node.leaves.map(l => `<div class="tree-leaf" onclick="copyCommand('${l.cmd.replace(/'/g,"\\'")}',this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();copyCommand('${l.cmd.replace(/'/g,"\\'")}',this)}"><span class="tree-leaf-q">${l.q}</span><span class="tree-leaf-cmd">${l.cmd}</span></div>`).join('')}
       </div></div>
     </div>`).join('');
 }
@@ -910,8 +961,8 @@ function renderSections() {
     }
     return divider + `
     <div class="section" id="${section.id}" data-section data-group="${section.group}">
-      <div class="section-header" onclick="toggleSection(this)">
-        <div class="section-icon">${section.icon}</div>
+      <div class="section-header" onclick="toggleSection(this)" tabindex="0" role="button" aria-expanded="true" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSection(this)}">
+        <div class="section-icon">${iconSvg(section.icon)}</div>
         <div class="section-title">${section.title}</div>
         <span class="section-count">${section.commands.length}</span>
         <span class="section-chevron">\u25BC</span>
@@ -922,7 +973,7 @@ function renderSections() {
             <div class="cmd-info"><div class="cmd-command">${cmd.cmd}</div><div class="cmd-desc">${cmd.desc}</div></div>
             <div class="cmd-meta">
               <span class="cmd-tag input-${cmd.input}">${INPUT_LABELS[cmd.input]}</span>
-              <button class="copy-btn" onclick="copyCommand('${cmd.cmd.replace(/'/g,"\\'")}',this)" title="Copy">\u{1F4CB}</button>
+              <button class="copy-btn" onclick="copyCommand('${cmd.cmd.replace(/'/g,"\\'")}',this)" title="Copy" aria-label="Copy ${cmd.cmd}">${COPY_ICON}</button>
             </div>
           </div>`).join('')}
       </div></div>
@@ -936,7 +987,7 @@ function renderSidebarCategories() {
     if (!nav) return;
     nav.innerHTML = ids.map(id => {
       const s = DATA.sections.find(s => s.id === id);
-      return s ? `<li><a href="#${s.id}"><span class="nav-icon">${s.icon}</span> ${s.title}</a></li>` : '';
+      return s ? `<li><a href="#${s.id}"><span class="nav-icon">${iconSvg(s.icon)}</span> ${s.title}</a></li>` : '';
     }).join('');
   });
 }
@@ -945,23 +996,48 @@ function updateStats() {
   const total = DATA.sections.reduce((sum, s) => sum + s.commands.length, 0);
   document.getElementById('totalCommands').textContent = total;
   document.getElementById('totalSections').textContent = DATA.sections.length;
+  document.getElementById('totalPacks').textContent = document.querySelectorAll('.source-grid > *').length;
 }
 
-function toggleTree(i) { document.querySelector(`[data-tree="${i}"]`).classList.toggle('open'); }
-function toggleSection(header) { header.closest('.section').classList.toggle('collapsed'); }
+function toggleTree(i) {
+  const node = document.querySelector(`[data-tree="${i}"]`);
+  node.classList.toggle('open');
+  const header = node.querySelector('.tree-node-header');
+  header.setAttribute('aria-expanded', node.classList.contains('open'));
+}
+function toggleSection(header) {
+  const section = header.closest('.section');
+  section.classList.toggle('collapsed');
+  header.setAttribute('aria-expanded', !section.classList.contains('collapsed'));
+}
 
 function copyCommand(text, el) {
-  navigator.clipboard.writeText(text).then(() => {
+  function onCopied() {
     if (el.classList.contains('copy-btn')) {
-      el.classList.add('copied'); el.innerHTML = '\u2713';
-      setTimeout(() => { el.classList.remove('copied'); el.innerHTML = '\u{1F4CB}'; }, 1200);
+      const origLabel = el.getAttribute('aria-label');
+      el.classList.add('copied'); el.innerHTML = CHECK_ICON; el.setAttribute('aria-label', 'Copied!');
+      setTimeout(() => { el.classList.remove('copied'); el.innerHTML = COPY_ICON; el.setAttribute('aria-label', origLabel); }, 1200);
     } else if (el.classList.contains('tree-leaf')) {
       el.style.background = 'var(--copy-flash)';
       setTimeout(() => { el.style.background = ''; }, 400);
     }
     const card = el.closest('.cmd-card');
     if (card) { card.classList.add('flash'); setTimeout(() => card.classList.remove('flash'), 500); }
-  });
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(onCopied).catch(() => { fallbackCopy(text) && onCopied(); });
+  } else {
+    fallbackCopy(text) && onCopied();
+  }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.cssText = 'position:fixed;left:-9999px';
+  document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  return ok;
 }
 
 const searchInput = document.getElementById('searchInput');
