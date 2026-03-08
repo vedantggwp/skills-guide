@@ -79,7 +79,7 @@ function findSkillFiles(dir, depth = 0) {
       const fullPath = path.join(dir, entry.name);
       if (entry.isFile() && entry.name === 'SKILL.md') {
         results.push(fullPath);
-      } else if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+      } else if ((entry.isDirectory() || entry.isSymbolicLink()) && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
         results.push(...findSkillFiles(fullPath, depth + 1));
       }
     }
