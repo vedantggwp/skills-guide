@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Skills Command Guide</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -267,10 +268,44 @@ body::before {
 
 /* No Results */
 .no-results { text-align: center; padding: 50px 20px; display: none; }
-.no-results.visible { display: block; }
+.no-results.visible { display: block; animation: fadeIn 0.25s ease; }
 .no-results-icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.4; }
 .no-results h3 { font-family: var(--font-display); font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 4px; }
 .no-results p { font-size: 0.8rem; color: var(--text-tertiary); }
+
+/* Search Results Mode */
+.main.search-active .decision-tree,
+.main.search-active .workflow,
+.main.search-active .pro-tips,
+.main.search-active .sources,
+.main.search-active #commandSections { display: none; }
+.search-results { display: none; }
+.main.search-active .search-results { display: block; }
+.search-results-list { display: grid; gap: 6px; }
+.search-result-card {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px;
+  padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: 9px; transition: all 0.25s var(--ease-out-expo);
+  animation: fadeSlideIn 0.2s ease both;
+}
+.search-result-card:hover { background: var(--bg-card-hover); border-color: var(--border); box-shadow: var(--shadow-card); transform: translateY(-1px); }
+.search-result-card .cmd-origin { font-family: var(--font-mono); font-size: 0.58rem; color: var(--text-tertiary); background: var(--bg-surface); padding: 2px 7px; border-radius: 4px; margin-bottom: 4px; display: inline-block; letter-spacing: 0.02em; }
+.search-result-card .cmd-command { font-family: var(--font-mono); font-size: 0.78rem; font-weight: 500; color: var(--accent-text); margin-bottom: 3px; }
+.search-result-card .cmd-desc { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; }
+.search-result-card .cmd-meta { display: flex; align-items: center; gap: 6px; }
+.search-show-all {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 12px; padding: 12px; border-radius: 9px; border: 1px dashed var(--border);
+  background: transparent; color: var(--text-secondary); font-family: var(--font-body);
+  font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.25s;
+  width: 100%;
+}
+.search-show-all:hover { border-color: var(--accent); color: var(--accent-text); background: var(--accent-dim); }
+.search-show-all .show-all-count { font-family: var(--font-mono); font-size: 0.72rem; background: var(--bg-surface); padding: 2px 8px; border-radius: 12px; }
+@keyframes fadeSlideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.search-hint { transition: opacity 0.15s ease; }
+.search-hint.hiding { opacity: 0; }
 
 /* Category Dividers */
 .category-divider {
@@ -416,6 +451,10 @@ body::before {
     </div>
 
     <div id="commandSections"></div>
+    <div class="search-results" id="searchResults">
+      <div class="search-results-list" id="searchResultsList"></div>
+      <button class="search-show-all" id="searchShowAll" style="display:none"></button>
+    </div>
     <div class="no-results" id="noResults"><div class="no-results-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4"/><path d="m10.5 10.5 3.5 3.5"/></svg></div><h3>No commands found</h3><p>Try a different search term</p></div>
 
     <div class="sources" id="sources">
@@ -969,14 +1008,17 @@ function renderSections() {
         <span class="section-chevron">\u25BC</span>
       </div>
       <div class="section-body"><div class="section-body-inner">
-        ${section.commands.map(cmd => `
-          <div class="cmd-card" data-searchable data-cmd="${cmd.cmd.toLowerCase()}" data-desc="${cmd.desc.toLowerCase()}">
-            <div class="cmd-info"><div class="cmd-command">${cmd.cmd}</div><div class="cmd-desc">${cmd.desc}</div></div>
+        ${section.commands.map(cmd => {
+          const esc = s => s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          return `
+          <div class="cmd-card" data-searchable data-cmd="${esc(cmd.cmd.toLowerCase())}" data-desc="${esc(cmd.desc.toLowerCase())}">
+            <div class="cmd-info"><div class="cmd-command">${esc(cmd.cmd)}</div><div class="cmd-desc">${esc(cmd.desc)}</div></div>
             <div class="cmd-meta">
               <span class="cmd-tag input-${cmd.input}">${INPUT_LABELS[cmd.input]}</span>
-              <button class="copy-btn" onclick="copyCommand('${cmd.cmd.replace(/'/g,"\\'")}',this)" title="Copy" aria-label="Copy ${cmd.cmd}">${COPY_ICON}</button>
+              <button class="copy-btn" onclick="copyCommand('${cmd.cmd.replace(/'/g,"\\'")}',this)" title="Copy" aria-label="Copy ${esc(cmd.cmd)}">${COPY_ICON}</button>
             </div>
-          </div>`).join('')}
+          </div>`;
+        }).join('')}
       </div></div>
     </div>`;
   }).join('');
@@ -1045,50 +1087,112 @@ const searchInput = document.getElementById('searchInput');
 const searchCount = document.getElementById('searchCount');
 const searchHint = document.getElementById('searchHint');
 const noResults = document.getElementById('noResults');
+const searchResultsList = document.getElementById('searchResultsList');
+const searchShowAll = document.getElementById('searchShowAll');
+const mainEl = document.querySelector('.main');
+const SEARCH_CAP = 10;
+let searchShowingAll = false;
+let lastResults = [];
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Build flat search index from DATA
+const searchIndex = [];
+DATA.sections.forEach(section => {
+  section.commands.forEach(cmd => {
+    searchIndex.push({
+      cmd: cmd.cmd,
+      desc: cmd.desc,
+      input: cmd.input,
+      sectionTitle: section.title,
+      cmdLower: cmd.cmd.toLowerCase(),
+      descLower: cmd.desc.toLowerCase(),
+      sectionLower: section.title.toLowerCase(),
+      inputLower: cmd.input.toLowerCase()
+    });
+  });
+});
+
+function searchCommands(q) {
+  const tokens = q.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  if (!tokens.length) return [];
+  const cmdMatches = [];
+  const descMatches = [];
+  searchIndex.forEach(item => {
+    const allMatch = tokens.every(t =>
+      item.cmdLower.includes(t) || item.descLower.includes(t) ||
+      item.sectionLower.includes(t) || item.inputLower.includes(t)
+    );
+    if (!allMatch) return;
+    const cmdHit = tokens.some(t => item.cmdLower.includes(t));
+    if (cmdHit) cmdMatches.push(item);
+    else descMatches.push(item);
+  });
+  return [...cmdMatches, ...descMatches];
+}
+
+function renderSearchResults(results, limit) {
+  const show = limit ? results.slice(0, limit) : results;
+  searchResultsList.innerHTML = show.map((item, i) => `
+    <div class="search-result-card" style="animation-delay:${Math.min(i * 0.03, 0.15).toFixed(2)}s">
+      <div class="cmd-info">
+        <span class="cmd-origin">${escHtml(item.sectionTitle)}</span>
+        <div class="cmd-command">${escHtml(item.cmd)}</div>
+        <div class="cmd-desc">${escHtml(item.desc)}</div>
+      </div>
+      <div class="cmd-meta">
+        <span class="cmd-tag input-${item.input}">${INPUT_LABELS[item.input]}</span>
+        <button class="copy-btn" onclick="copyCommand('${item.cmd.replace(/'/g,"\\'")}',this)" title="Copy" aria-label="Copy ${escHtml(item.cmd)}">${COPY_ICON}</button>
+      </div>
+    </div>`).join('');
+
+  const remaining = results.length - show.length;
+  if (remaining > 0) {
+    searchShowAll.innerHTML = `Show all results <span class="show-all-count">${results.length} total</span>`;
+    searchShowAll.style.display = '';
+  } else {
+    searchShowAll.style.display = 'none';
+  }
+}
 
 searchInput.addEventListener('input', function() {
-  const q = this.value.toLowerCase().trim();
-  const cards = document.querySelectorAll('[data-searchable]');
-  let visible = 0;
-
+  const q = this.value.trim();
   if (!q) {
-    cards.forEach(c => c.classList.remove('hidden'));
-    document.querySelectorAll('.section').forEach(s => s.style.display = '');
-    document.querySelectorAll('.category-divider').forEach(d => d.style.display = '');
+    mainEl.classList.remove('search-active');
     searchCount.classList.remove('visible');
     noResults.classList.remove('visible');
+    searchResultsList.innerHTML = '';
+    searchShowAll.style.display = 'none';
+    lastResults = [];
+    searchShowingAll = false;
     return;
   }
 
-  cards.forEach(card => {
-    const match = card.dataset.cmd.includes(q) || card.dataset.desc.includes(q);
-    card.classList.toggle('hidden', !match);
-    if (match) visible++;
-  });
+  mainEl.classList.add('search-active');
+  const results = searchCommands(q);
+  lastResults = results;
+  searchShowingAll = false;
+  renderSearchResults(results, SEARCH_CAP);
 
-  document.querySelectorAll('.section').forEach(section => {
-    const has = section.querySelectorAll('[data-searchable]:not(.hidden)').length > 0;
-    section.style.display = has ? '' : 'none';
-    if (has) section.classList.remove('collapsed');
-  });
-
-  document.querySelectorAll('.category-divider').forEach(d => {
-    let next = d.nextElementSibling;
-    let anyVisible = false;
-    while (next && !next.classList.contains('category-divider')) {
-      if (next.style.display !== 'none') anyVisible = true;
-      next = next.nextElementSibling;
-    }
-    d.style.display = anyVisible ? '' : 'none';
-  });
-
-  searchCount.textContent = `${visible} found`;
-  searchCount.classList.toggle('visible', q.length > 0);
-  noResults.classList.toggle('visible', visible === 0);
+  searchCount.textContent = `${results.length} found`;
+  searchCount.classList.add('visible');
+  noResults.classList.toggle('visible', results.length === 0);
 });
 
-searchInput.addEventListener('focus', () => { searchHint.style.display = 'none'; });
-searchInput.addEventListener('blur', () => { if (!searchInput.value) searchHint.style.display = ''; });
+searchShowAll.addEventListener('click', () => {
+  searchShowingAll = true;
+  renderSearchResults(lastResults, null);
+});
+
+searchInput.addEventListener('focus', () => {
+  searchHint.classList.add('hiding');
+  setTimeout(() => { if (searchHint.classList.contains('hiding')) searchHint.style.display = 'none'; }, 150);
+});
+searchInput.addEventListener('blur', () => {
+  if (!searchInput.value) { searchHint.style.display = ''; searchHint.classList.remove('hiding'); }
+});
 
 function toggleTheme() {
   const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
