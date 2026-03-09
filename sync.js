@@ -177,15 +177,19 @@ function scanSkills() {
         const firstLine = afterFrontmatter.split('\n').find(l => l.trim() && !l.startsWith('#'));
         desc = firstLine ? firstLine.trim().slice(0, 100) : 'No description';
       }
-      // Truncate long descriptions
+
+      // Full description for detail view (up to 500 chars)
+      const fullDesc = desc.length > 500 ? desc.slice(0, 497) + '...' : desc;
+      // Truncate for card preview
       if (desc.length > 100) desc = desc.slice(0, 97) + '...';
 
       const category = inferCategory(filePath);
-      const inputType = inferInputType(desc, name);
+      const inputType = inferInputType(fullDesc, name);
 
       skills.push({
         cmd: name.startsWith('/') ? name : `/${name}`,
         desc,
+        fullDesc: fullDesc !== desc ? fullDesc : undefined,
         input: inputType,
         category,
         source: 'scanned',
@@ -340,7 +344,9 @@ function buildOutput(skills) {
   for (const skill of skills) {
     const cat = skill.category || 'uncategorized';
     if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push({ cmd: skill.cmd, desc: skill.desc, input: skill.input });
+    const entry = { cmd: skill.cmd, desc: skill.desc, input: skill.input };
+    if (skill.fullDesc) entry.fullDesc = skill.fullDesc;
+    grouped[cat].push(entry);
   }
 
   // Build sections (only include categories that have skills)
@@ -385,9 +391,11 @@ function buildDataString(output) {
 // ── Step 10: Generate sections JS from output ──
 function generateSectionsJS(output) {
   const sectionLines = output.sections.map(s => {
-    const cmds = s.commands.map(c =>
-      `      { cmd: ${JSON.stringify(c.cmd)}, desc: ${JSON.stringify(c.desc)}, input: ${JSON.stringify(c.input)} }`
-    ).join(',\n');
+    const cmds = s.commands.map(c => {
+      const parts = [`cmd: ${JSON.stringify(c.cmd)}`, `desc: ${JSON.stringify(c.desc)}`, `input: ${JSON.stringify(c.input)}`];
+      if (c.fullDesc) parts.push(`fullDesc: ${JSON.stringify(c.fullDesc)}`);
+      return `      { ${parts.join(', ')} }`;
+    }).join(',\n');
     return `    { id: ${JSON.stringify(s.id)}, icon: ${JSON.stringify(s.icon)}, title: ${JSON.stringify(s.title)}, group: ${JSON.stringify(s.group)}, commands: [\n${cmds},\n    ]}`;
   }).join(',\n');
 
