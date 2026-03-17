@@ -121,8 +121,60 @@ function inferCategory(skillPath) {
     if (dirCategoryMap[topDir]) return dirCategoryMap[topDir];
   }
 
-  // Fall back: try to match by skill name keywords
+  // Exact name overrides — for skills whose name doesn't match keyword patterns
   const name = (parts[parts.length - 2] || '').toLowerCase();
+  const exactMap = {
+    // Creative & Design
+    'make': 'creative', 'visual': 'creative', 'billion-dollar-design': 'creative',
+    'ui-ux-pro-max': 'creative', 'vibe': 'creative', 'web-design-guidelines': 'creative',
+    // Video & Media
+    'record-demo': 'video', 'reel': 'video', 'remotion-best-practices': 'video',
+    'youtube-summarizer': 'video',
+    // CRO
+    'ab-test-setup': 'cro', 'homepage-audit': 'cro', 'churn-prevention': 'cro',
+    // Content
+    'ad-creative': 'content', 'case-study-builder': 'content', 'de-ai-ify': 'content',
+    'humanizer': 'content', 'testimonial-collector': 'content', 'tweet-draft-reviewer': 'content',
+    'voice-extractor': 'content',
+    // SEO
+    'ai-discoverability-audit': 'seo', 'ai-discoverability-audit-v2': 'seo',
+    // Strategy
+    'analytics-tracking': 'strategy', 'competitor-alternatives': 'strategy',
+    'free-tool-strategy': 'strategy', 'launch-strategy': 'strategy',
+    'positioning-basics': 'strategy', 'revops': 'strategy',
+    // Outreach
+    'newsletter-creation-curation': 'outreach', 'sales-enablement': 'outreach',
+    // Research
+    'last30days': 'research', 'reddit-insights': 'research', 'sherlock': 'research',
+    'brand-voice-extractor': 'research', 'competitor-intel-brief': 'research',
+    'founder-intelligence': 'research', 'twitter-pull': 'research',
+    // Engineering
+    'codex': 'engineering', 'deploy-to-vercel': 'engineering',
+    'retro': 'engineering', 'ship': 'engineering',
+    // Patterns
+    'vercel-composition-patterns': 'patterns', 'vercel-react-best-practices': 'patterns',
+    'vercel-react-native-skills': 'patterns',
+    // Productivity
+    'browse': 'productivity', 'gstack': 'productivity', 'defuddle': 'productivity',
+    'go-mode': 'productivity', 'daily-briefing-builder': 'productivity',
+    'meeting-prep-cc': 'productivity', 'plan-my-day': 'productivity',
+    'plan-ceo-review': 'productivity', 'plan-eng-review': 'productivity',
+    'meeting-prep': 'productivity', 'meeting-prep-cc': 'productivity',
+    // Obsidian
+    'obsidian-bases': 'obsidian', 'obsidian-cli': 'obsidian',
+    'obsidian-markdown': 'obsidian', 'json-canvas': 'obsidian',
+    'vault-cleanup-auditor': 'obsidian',
+    // Compliance (regulatory-compliance dir catches most, but top-level ones need exact match)
+    'capa-officer': 'compliance', 'fda-consultant-specialist': 'compliance',
+    'gdpr-dsgvo-expert': 'compliance', 'information-security-manager-iso27001': 'compliance',
+    'isms-audit-expert': 'compliance', 'mdr-745-specialist': 'compliance',
+    'qms-audit-expert': 'compliance', 'quality-documentation-manager': 'compliance',
+    'quality-manager-qmr': 'compliance', 'quality-manager-qms-iso13485': 'compliance',
+    'regulatory-affairs-head': 'compliance', 'risk-management-specialist': 'compliance',
+  };
+  if (exactMap[name]) return exactMap[name];
+
+  // Fall back: try to match by skill name keywords
   if (name.includes('cro') || name.includes('conversion')) return 'cro';
   if (name.includes('seo')) return 'seo';
   if (name.includes('email') || name.includes('outreach') || name.includes('cold')) return 'outreach';
@@ -332,6 +384,8 @@ function buildOutput(skills) {
     { id: 'finance', icon: '\u{1F4B0}', title: 'Finance', group: 'business' },
     { id: 'business', icon: '\u{1F4BC}', title: 'Business (Other)', group: 'business' },
     { id: 'compliance', icon: '\u{1F6E1}', title: 'Regulatory & Compliance', group: 'business' },
+    { id: 'creative', icon: '\u{1F3A8}', title: 'Creative & Design', group: 'creative' },
+    { id: 'video', icon: '\u{1F3AC}', title: 'Video & Media', group: 'creative' },
     { id: 'gsd', icon: '\u{1F680}', title: 'GSD (Get Stuff Done)', group: 'workflow' },
     { id: 'superpowers', icon: '\u26A1', title: 'Superpowers (Meta-Skills)', group: 'workflow' },
     { id: 'productivity', icon: '\u{23F0}', title: 'Productivity', group: 'workflow' },
