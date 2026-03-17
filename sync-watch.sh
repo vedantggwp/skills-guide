@@ -32,7 +32,7 @@ cd "$SCRIPT_DIR"
 if ! git diff --quiet index.html 2>/dev/null; then
   git add index.html
   git commit -m "sync: auto-update skills data ($(date '+%Y-%m-%d %H:%M'))" >/dev/null 2>&1
-  git push >/dev/null 2>&1
+  git push >> "$LOG" 2>&1 || echo "$(date) — PUSH FAILED" >> "$LOG"
   echo "$(date '+%Y-%m-%d %H:%M:%S') — Committed and pushed" >> "$LOG"
 fi
 

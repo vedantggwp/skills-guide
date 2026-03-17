@@ -432,16 +432,6 @@ function buildOutput(skills) {
   };
 }
 
-// ── Step 9: Build the JS DATA object string for injection ──
-// This produces the exact JavaScript that goes between the markers
-function buildDataString(output) {
-  const lines = ['const DATA = {'];
-
-  // Tree (keep the existing decision tree — it's curated, not auto-generated)
-  // We read it from the current index.html so it's preserved
-  return null; // signal to preserve tree from existing file
-}
-
 // ── Step 10: Generate sections JS from output ──
 function generateSectionsJS(output) {
   const sectionLines = output.sections.map(s => {
@@ -478,12 +468,17 @@ function injectIntoHTML(output) {
     process.exit(1);
   }
 
+  if (endIdx <= startIdx) {
+    console.error('  ✗ End marker appears before start marker — index.html is malformed');
+    process.exit(1);
+  }
+
   // Extract existing tree (between DATA = { and sections:)
   const existingData = html.slice(
     html.indexOf('const DATA = {', startIdx),
     html.indexOf(END_MARKER)
   );
-  const treeMatch = existingData.match(/tree:\s*\[([\s\S]*?)\],\s*\n\s*sidebarGroups:/);
+  const treeMatch = existingData.match(/tree:\s*\[([\s\S]*?)\]\s*,\s*\n?\s*sidebarGroups:/);
   const existingTree = treeMatch ? treeMatch[1] : null;
 
   if (!existingTree) {
@@ -521,7 +516,7 @@ ${END_MARKER}`;
     { name: 'Has <script>', pass: newHTML.includes('<script>') },
     { name: 'Has </script>', pass: newHTML.includes('</script>') },
     { name: 'Has render()', pass: newHTML.includes('render()') },
-    { name: `Line count within 20% (${originalLineCount} → ${newLineCount})`, pass: lineDiff < 0.2 },
+    { name: `Line count within 10% (${originalLineCount} → ${newLineCount})`, pass: lineDiff < 0.1 },
   ];
 
   console.log('\n  ── Validation ──');
