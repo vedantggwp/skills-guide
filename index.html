@@ -638,7 +638,8 @@ const DATA = {
           "gsd",
           "superpowers",
           "productivity",
-          "obsidian"
+          "obsidian",
+          "uncategorized"
       ]
   },
   sections: [
@@ -1001,6 +1002,9 @@ const DATA = {
       { cmd: "/vault-cleanup-auditor", desc: "Audit your Obsidian vault in Claude Code — finds stale drafts, empty folders, duplicate filenames...", input: "url", fullDesc: "Audit your Obsidian vault in Claude Code — finds stale drafts, empty folders, duplicate filenames, and incomplete files. Saves a dated report." },
       { cmd: "defuddle parse <url> --md", desc: "Extract clean markdown from web pages", input: "url" },
       { cmd: "obsidian CLI", desc: "Read, create, search vault notes", input: "text" },
+    ]},
+    { id: "uncategorized", icon: "❓", title: "Other Skills", group: "workflow", commands: [
+      { cmd: "/video", desc: "Video production orchestrator for Remotion. Takes a brief, runs creative direction, builds canvas...", input: "code", fullDesc: "Video production orchestrator for Remotion. Takes a brief, runs creative direction, builds canvas + camera + audio + subtitles, previews in Studio, iterates on feedback, renders. Loads cinema-grade rules automatically. Use when the user says \"make a video\", \"create a video\", \"video about\", \"/video\", or describes a visual story they want produced." },
     ]},
   ]
 };
