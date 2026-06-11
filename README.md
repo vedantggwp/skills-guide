@@ -1,6 +1,6 @@
 # Skills.Guide
 
-A single-page reference for every slash command installed in Claude Code. Search, browse, copy. Built for speed — no frameworks, no build step, no external dependencies at runtime.
+A single-page reference for every slash command installed across **Claude Code, Codex, and Gemini** — with an agent filter to see what each one has. Search, browse, copy. Built for speed — no frameworks, no build step, no external dependencies at runtime.
 
 **Live:** [vedantggwp.github.io/skills-guide](https://vedantggwp.github.io/skills-guide/)
 
@@ -47,6 +47,10 @@ The sidebar mirrors these groups. You scan by domain, not by origin.
 
 Every command is one click away from your clipboard. Click a command card, click a tree leaf, hit the copy button — the command is on your clipboard ready to paste into Claude Code. No selecting, no highlighting, no manual copying. The flash animation gives immediate feedback that it worked.
 
+### 4. Multi-Agent Aware
+
+Skills live across three agents — Claude Code, Codex, and Gemini — and the same command often exists in more than one. Each command card shows agent badges (`CL` / `CX` / `GM`), and the **agent filter** at the top of the catalogue narrows the view to a single agent. So "what does Codex actually have?" becomes one click, not a memory test.
+
 ## Architecture
 
 ### Single-File HTML
@@ -71,7 +75,7 @@ const DATA = { ... };
 
 `sync.js` follows a strict safety protocol:
 
-1. **Scan** `~/.claude/skills/` recursively for `SKILL.md` files
+1. **Scan** each agent's skills dir (`~/.claude/skills/`, `~/.codex/skills/`, `~/.gemini/skills/`) recursively for `SKILL.md` files, tagging each skill with the agents that have it
 2. **Parse** YAML frontmatter from each file (name, description)
 3. **Merge** scanned skills with static plugin skills (Superpowers, GSD, ECC — these live in plugin cache, not in `~/.claude/skills/`)
 4. **Build** the DATA object with categories, sidebar groups, and input type tags
